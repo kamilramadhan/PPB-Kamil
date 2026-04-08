@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "300814379649",
+    "project_id": "fir-crud-kamil",
+    "storage_bucket": "fir-crud-kamil.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300814379649:android:847f27eb309ef88c72fb80",
+        "android_client_info": {
+          "package_name": "com.example.crudlocaldb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1wPxCBnC15EZRmO-J8UbrVs8sRmODAYA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
