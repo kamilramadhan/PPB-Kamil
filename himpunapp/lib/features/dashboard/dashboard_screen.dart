@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/services/app_notification_service.dart';
 import '../../data/remote/firestore_service.dart';
 import '../auth/auth_controller.dart';
 import '../member/member_list_screen.dart';
 import '../division/division_list_screen.dart';
 import '../agenda/agenda_list_screen.dart';
+import '../notification/notification_list_screen.dart';
 import '../profile/profile_edit_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -40,7 +43,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
+    final auth = context.read<AuthController>();
     return Scaffold(
+      appBar: _currentIndex == 0
+          ? AppBar(
+              title: const Text('Dashboard'),
+              backgroundColor: const Color(0xFF1565C0),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              actions: [
+                // Notification bell with badge
+                Consumer<AppNotificationService>(
+                  builder: (context, notifService, _) {
+                    return IconButton(
+                      icon: Badge(
+                        isLabelVisible: notifService.unreadCount > 0,
+                        label: Text(
+                          '${notifService.unreadCount}',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        child: const Icon(Icons.notifications_rounded),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationListScreen(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Notifikasi',
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person_rounded),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileEditScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Edit Profil',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded),
+                  onPressed: () => auth.logout(),
+                  tooltip: 'Keluar',
+                ),
+              ],
+            )
+          : null,
       body: _screens[_currentIndex],
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -189,37 +242,10 @@ class _DashboardHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final firestoreService = FirestoreService();
-    final isWide = MediaQuery.of(context).size.width > 800;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: isWide
-          ? null
-          : AppBar(
-              title: const Text('Dashboard'),
-              backgroundColor: const Color(0xFF1565C0),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_rounded),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ProfileEditScreen(),
-                      ),
-                    );
-                  },
-                  tooltip: 'Edit Profil',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded),
-                  onPressed: () => auth.logout(),
-                  tooltip: 'Keluar',
-                ),
-              ],
-            ),
-      body: SingleChildScrollView(
+    // Return content only (no Scaffold) so parent can control appBar / bottomBar.
+    // This prevents nested Scaffolds which caused the bottom overflow.
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,52 +267,71 @@ class _DashboardHome extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
+                  // Profile photo
+                  StreamBuilder<Map<String, dynamic>?>(
+                    stream: auth.user != null
+                        ? firestoreService.streamUserProfile(auth.user!.uid)
+                        : const Stream.empty(),
+                    builder: (context, snapshot) {
+                      final photo = snapshot.data?['photoBase64'] as String?;
+                      return Container(
+                        width: 56,
+                        height: 56,
                         decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            width: 2,
+                          ),
+                          image: photo != null
+                              ? DecorationImage(
+                                  image: MemoryImage(
+                                    base64Decode(photo),
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const Icon(Icons.waving_hand_rounded,
-                            color: Colors.amber, size: 28),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Selamat Datang,',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              auth.user?.displayName ?? 'Pengguna',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                        child: photo == null
+                            ? const Icon(Icons.person_rounded,
+                                color: Colors.white, size: 28)
+                            : null,
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Kelola organisasi himpunanmu dengan mudah 🎯',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 13,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selamat Datang,',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          auth.user?.displayName ?? 'Pengguna',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Kelola organisasi himpunanmu dengan mudah 🎯',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -461,11 +506,10 @@ class _DashboardHome extends StatelessWidget {
                   }).toList(),
                 );
               },
-            ),
+                ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Color _statusColor(String status) {

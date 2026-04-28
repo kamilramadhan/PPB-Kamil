@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/services/app_notification_service.dart';
 import '../../data/remote/firestore_service.dart';
 import '../../data/models/division_model.dart';
 
@@ -55,6 +57,16 @@ class _DivisionFormScreenState extends State<DivisionFormScreen> {
         await _firestoreService.updateDivision(widget.division!.id!, division);
       } else {
         await _firestoreService.addDivision(division);
+      }
+
+      // Trigger notification
+      if (mounted) {
+        final notifService = context.read<AppNotificationService>();
+        if (_isEditing) {
+          notifService.notifyDivisionUpdated(division.name);
+        } else {
+          notifService.notifyDivisionAdded(division.name);
+        }
       }
 
       if (mounted) {

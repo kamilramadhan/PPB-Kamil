@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import '../../core/utils/platform_image_picker.dart';
+import '../../core/widgets/image_source_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/services/app_notification_service.dart';
 import '../../data/remote/firestore_service.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/division_model.dart';
@@ -23,7 +27,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
 
   String? _selectedDivision;
   String? _photoBase64;
-  final ImagePicker _picker = ImagePicker();
+  // Using platform-specific picker via platform_image_picker
 
   bool _isLoading = false;
   bool get _isEditing => widget.member != null;
@@ -51,51 +55,56 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
   }
 
   Future<void> _showImageSourcePicker() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt_rounded),
-                title: const Text('Ambil dari Kamera'),
-                onTap: () => Navigator.pop(context, ImageSource.camera),
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder_rounded),
-                title: const Text('Pilih dari File/Galeri'),
-                onTap: () => Navigator.pop(context, ImageSource.gallery),
-              ),
-            ],
-          ),
-        );
-      },
+    final result = await showImageSourceSheet(
+      context,
+      showDelete: _photoBase64 != null,
     );
+    if (result == null) return;
 
-    if (source != null) {
-      await _pickImage(source);
+    if (result.isDelete) {
+      setState(() => _photoBase64 = null);
+      return;
+    }
+
+    if (result.source != null) {
+      await _pickImage(result.source!);
     }
   }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(
-        source: source,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 70,
+      final XFile? image = await pickImagePlatform(
+        source,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 50,
       );
       if (image != null) {
         final bytes = await image.readAsBytes();
-        setState(() {
-          _photoBase64 = base64Encode(bytes);
-        });
+        final encoded = base64Encode(bytes);
+        if (encoded.length > 800000) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Foto terlalu besar. Coba foto dengan resolusi lebih kecil.'),
+              backgroundColor: Colors.red[400],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+          return;
+        }
+        setState(() => _photoBase64 = encoded);
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
+        SnackBar(
+          content: Text('Gagal memilih foto: $e'),
+          backgroundColor: Colors.red[400],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
     }
   }
@@ -124,6 +133,16 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
         await _firestoreService.updateMember(widget.member!.id!, member);
       } else {
         await _firestoreService.addMember(member);
+      }
+
+      // Trigger notification
+      if (mounted) {
+        final notifService = context.read<AppNotificationService>();
+        if (_isEditing) {
+          notifService.notifyMemberUpdated(member.name);
+        } else {
+          notifService.notifyMemberAdded(member.name);
+        }
       }
 
       if (mounted) {
@@ -246,7 +265,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                           );
                         }).toList();
                       }
-                      
+
                       // Check if _selectedDivision is not in items, set to null
                       if (_selectedDivision != null && items.isNotEmpty) {
                         bool found = items.any((item) => item.value == _selectedDivision);

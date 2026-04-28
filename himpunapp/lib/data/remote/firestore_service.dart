@@ -15,13 +15,17 @@ class FirestoreService {
     required String name,
     String? photoBase64,
   }) async {
-    await _usersRef.doc(uid).set({
+    final data = <String, dynamic>{
       'uid': uid,
       'email': email,
       'name': name,
-      'photoBase64': photoBase64,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    // Hanya kirim photoBase64 jika ada nilainya (jangan overwrite dengan null)
+    if (photoBase64 != null) {
+      data['photoBase64'] = photoBase64;
+    }
+    await _usersRef.doc(uid).set(data, SetOptions(merge: true));
   }
 
   Stream<Map<String, dynamic>?> streamUserProfile(String uid) {
@@ -29,6 +33,10 @@ class FirestoreService {
       if (!doc.exists) return null;
       return doc.data() as Map<String, dynamic>;
     });
+  }
+
+  Future<void> deleteUserPhoto(String uid) async {
+    await _usersRef.doc(uid).update({'photoBase64': FieldValue.delete()});
   }
 
   // ========== MEMBERS ==========

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth_controller.dart';
 import 'register_screen.dart';
+import '../../core/services/web_notifier.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,6 +41,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    // Minta izin notifikasi saat user klik tombol (interaksi)
+    requestWebNotificationPermission();
+    
     final auth = context.read<AuthController>();
     await auth.login(
       _emailController.text,
@@ -80,15 +85,32 @@ class _LoginScreenState extends State<LoginScreen>
                     children: [
                       // Logo & Title
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        width: 120,
+                        height: 120,
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.groups_rounded,
-                          size: 56,
                           color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'logo.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.business_rounded,
+                                size: 56,
+                                color: Color(0xFF1565C0),
+                              );
+                            },
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),

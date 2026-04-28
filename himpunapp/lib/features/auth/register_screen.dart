@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth_controller.dart';
+import 'login_screen.dart';
+import '../../core/services/web_notifier.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -44,6 +46,10 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   void _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    // Minta izin notifikasi saat user klik tombol (interaksi)
+    requestWebNotificationPermission();
+    
     final auth = context.read<AuthController>();
     final success = await auth.register(
       _emailController.text,
