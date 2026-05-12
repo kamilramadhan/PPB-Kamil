@@ -1,0 +1,28 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6FBFF"/>
+      <stop offset="100%" stop-color="#EDF6FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0F172A" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" rx="40" fill="#F5F7FA"/>
+  <rect x="70" y="70" width="1060" height="92" rx="24" fill="#2E7D32"/>
+  <text x="120" y="127" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="white">11 Wajah Terdeteksi</text>
+  <text x="780" y="127" font-family="Arial, sans-serif" font-size="20" fill="white" opacity="0.9">Kehadiran: 11 orang</text>
+  <rect x="70" y="195" width="1060" height="520" rx="30" fill="url(#panel)" filter="url(#shadow)"/>
+  <rect x="125" y="250" width="950" height="390" rx="24" fill="#DCE7F1"/>
+  <text x="600" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#64748B">Preview Kamera Absensi Wajah</text>
+  <rect x="205" y="325" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <rect x="330" y="308" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <rect x="470" y="286" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <rect x="600" y="322" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <rect x="735" y="300" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <rect x="860" y="330" width="86" height="92" rx="8" fill="none" stroke="#FF5252" stroke-width="6"/>
+  <g>
+    <rect x="125" y="625" width="950" height="62" rx="18" fill="#EAF7EC"/>
+    <text x="160" y="664" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2E7D32">Status: wajah terdeteksi, posisi dan ekspresi dipantau secara real-time.</text>
+  </g>
+</svg>
